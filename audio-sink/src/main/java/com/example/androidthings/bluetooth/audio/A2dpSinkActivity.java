@@ -77,7 +77,7 @@ public class A2dpSinkActivity extends Activity {
 
     private TextToSpeech mTtsEngine;
 
-    private static final String SPEAK_VERSION = "version 3";
+    private static final String SPEAK_VERSION = "version 4";
 
     /**
      * Handle an intent that is broadcast by the Bluetooth adapter whenever it changes its
@@ -155,11 +155,11 @@ public class A2dpSinkActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         UpdateManager manager = UpdateManager.getInstance();
-        UpdatePolicy policy = new UpdatePolicy.Builder()
+        /*UpdatePolicy policy = new UpdatePolicy.Builder()
                 .setPolicy(UpdatePolicy.POLICY_APPLY_AND_REBOOT)
                 .setApplyDeadline(1L, TimeUnit.MINUTES)
                 .build();
-        manager.setPolicy(policy);
+        manager.setPolicy(policy);*/
         manager.setChannel("dev-channel");
 
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();

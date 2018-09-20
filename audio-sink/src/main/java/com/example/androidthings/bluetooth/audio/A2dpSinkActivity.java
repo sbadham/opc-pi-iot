@@ -77,6 +77,8 @@ public class A2dpSinkActivity extends Activity {
 
     private TextToSpeech mTtsEngine;
 
+    private static final String SPEAK_VERSION = "version 3";
+
     /**
      * Handle an intent that is broadcast by the Bluetooth adapter whenever it changes its
      * state (after calling enable(), for example).
@@ -311,7 +313,7 @@ public class A2dpSinkActivity extends Activity {
             // generate corresponding broadcast intents or profile proxy events that you can
             // listen to and react appropriately.
 
-            speak("Bluetooth audio sink version 3 is discoverable for " + DISCOVERABLE_TIMEOUT_MS +
+            speak("Bluetooth audio sink " + SPEAK_VERSION + " is discoverable for " + DISCOVERABLE_TIMEOUT_MS +
                     " milliseconds. Look for a device named " + ADAPTER_FRIENDLY_NAME);
 
         }

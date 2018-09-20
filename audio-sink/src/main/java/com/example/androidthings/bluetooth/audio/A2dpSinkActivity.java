@@ -311,7 +311,7 @@ public class A2dpSinkActivity extends Activity {
             // generate corresponding broadcast intents or profile proxy events that you can
             // listen to and react appropriately.
 
-            speak("Bluetooth audio sink is discoverable for " + DISCOVERABLE_TIMEOUT_MS +
+            speak("Bluetooth audio sink version 3 is discoverable for " + DISCOVERABLE_TIMEOUT_MS +
                     " milliseconds. Look for a device named " + ADAPTER_FRIENDLY_NAME);
 
         }

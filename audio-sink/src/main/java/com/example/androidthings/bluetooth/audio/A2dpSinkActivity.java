@@ -32,12 +32,15 @@ import android.view.KeyEvent;
 import com.google.android.things.bluetooth.BluetoothProfileManager;
 import com.google.android.things.contrib.driver.button.Button;
 import com.google.android.things.contrib.driver.button.ButtonInputDriver;
+import com.google.android.things.update.UpdateManager;
+import com.google.android.things.update.UpdatePolicy;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Sample usage of the A2DP sink bluetooth profile. At startup, this activity sets the Bluetooth
@@ -148,6 +151,14 @@ public class A2dpSinkActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        UpdateManager manager = UpdateManager.getInstance();
+        UpdatePolicy policy = new UpdatePolicy.Builder()
+                .setPolicy(UpdatePolicy.POLICY_APPLY_AND_REBOOT)
+                .setApplyDeadline(1L, TimeUnit.MINUTES)
+                .build();
+        manager.setPolicy(policy);
+        manager.setChannel("dev-channel");
 
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (mBluetoothAdapter == null) {

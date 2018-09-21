@@ -81,7 +81,7 @@ public class A2dpSinkActivity extends Activity {
 
     private TextToSpeech mTtsEngine;
 
-    private static final String SPEAK_VERSION = "version 5";
+    private static final String SPEAK_VERSION = "version 6";
     private static final String QUEUE_IP = "tcp://192.168.1.19:1883";
     MqttClient client = null;
 

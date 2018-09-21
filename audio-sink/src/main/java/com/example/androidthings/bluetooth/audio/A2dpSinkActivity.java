@@ -77,7 +77,7 @@ public class A2dpSinkActivity extends Activity {
 
     private TextToSpeech mTtsEngine;
 
-    private static final String SPEAK_VERSION = "version 4";
+    private static final String SPEAK_VERSION = "version 5";
 
     /**
      * Handle an intent that is broadcast by the Bluetooth adapter whenever it changes its

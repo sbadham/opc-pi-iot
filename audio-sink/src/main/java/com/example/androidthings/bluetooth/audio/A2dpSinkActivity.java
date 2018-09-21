@@ -33,14 +33,18 @@ import com.google.android.things.bluetooth.BluetoothProfileManager;
 import com.google.android.things.contrib.driver.button.Button;
 import com.google.android.things.contrib.driver.button.ButtonInputDriver;
 import com.google.android.things.update.UpdateManager;
-import com.google.android.things.update.UpdatePolicy;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
+
+import org.eclipse.paho.client.mqttv3.MqttClient;
+import org.eclipse.paho.client.mqttv3.MqttException;
+import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
+import org.eclipse.paho.client.mqttv3.MqttPersistenceException;
 
 /**
  * Sample usage of the A2DP sink bluetooth profile. At startup, this activity sets the Bluetooth
@@ -78,6 +82,8 @@ public class A2dpSinkActivity extends Activity {
     private TextToSpeech mTtsEngine;
 
     private static final String SPEAK_VERSION = "version 5";
+    private static final String QUEUE_IP = "tcp://192.168.1.19:1883";
+    MqttClient client = null;
 
     /**
      * Handle an intent that is broadcast by the Bluetooth adapter whenever it changes its
@@ -155,11 +161,6 @@ public class A2dpSinkActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         UpdateManager manager = UpdateManager.getInstance();
-        /*UpdatePolicy policy = new UpdatePolicy.Builder()
-                .setPolicy(UpdatePolicy.POLICY_APPLY_AND_REBOOT)
-                .setApplyDeadline(1L, TimeUnit.MINUTES)
-                .build();
-        manager.setPolicy(policy);*/
         manager.setChannel("dev-channel");
 
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -231,6 +232,15 @@ public class A2dpSinkActivity extends Activity {
 
         // we intentionally leave the Bluetooth adapter enabled, so that other samples can use it
         // without having to initialize it.
+
+        if(client != null){
+            try{
+                client.disconnect();
+                client.close();
+            } catch (MqttException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private void setupBTProfiles() {
@@ -284,6 +294,23 @@ public class A2dpSinkActivity extends Activity {
         discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION,
                 DISCOVERABLE_TIMEOUT_MS);
         startActivityForResult(discoverableIntent, REQUEST_CODE_ENABLE_DISCOVERABLE);
+
+        //TODO Add message send enable
+        try {
+            if(client == null) {
+                client = new MqttClient(QUEUE_IP, "VpsAndroidThing", new MemoryPersistence());
+                client.connect();
+            }
+
+            MqttMessage message = new MqttMessage();
+            message.setPayload("MQTT Message Enable Discoverable"
+                    .getBytes());
+            client.publish("topic/vps", message);
+        } catch (MqttPersistenceException e) {
+                e.printStackTrace();
+        } catch (MqttException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -327,6 +354,22 @@ public class A2dpSinkActivity extends Activity {
         for (BluetoothDevice device: mA2DPSinkProxy.getConnectedDevices()) {
             Log.i(TAG, "Disconnecting device " + device);
             A2dpSinkHelper.disconnect(mA2DPSinkProxy, device);
+        }
+        //TODO Add message send disable
+        try {
+            if(client == null) {
+                client = new MqttClient(QUEUE_IP, "VpsAndroidThing", new MemoryPersistence());
+                client.connect();
+            }
+
+            MqttMessage message = new MqttMessage();
+            message.setPayload("MQTT Message Disconnect Connected Devices"
+                    .getBytes());
+            client.publish("topic/vps", message);
+        } catch (MqttPersistenceException e) {
+            e.printStackTrace();
+        } catch (MqttException e) {
+            e.printStackTrace();
         }
     }
 

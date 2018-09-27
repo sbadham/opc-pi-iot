@@ -22,8 +22,8 @@ android {
         applicationId "com.example.androidthings.bluetooth.audio"
         minSdkVersion 27
         targetSdkVersion 27
-        versionCode 6
-        versionName '1.6'
+        versionCode 9
+        versionName '1.9'
     }
     buildTypes {
         release {

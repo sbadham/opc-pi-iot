@@ -44,7 +44,8 @@ import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
-import org.eclipse.paho.client.mqttv3.MqttPersistenceException;
+import com.google.android.things.pio.PeripheralManager;
+import com.google.android.things.pio.UartDevice;
 
 /**
  * Sample usage of the A2DP sink bluetooth profile. At startup, this activity sets the Bluetooth
@@ -81,9 +82,12 @@ public class A2dpSinkActivity extends Activity {
 
     private TextToSpeech mTtsEngine;
 
-    private static final String SPEAK_VERSION = "version 6";
+    private static final String SPEAK_VERSION = "version 9";
     private static final String QUEUE_IP = "tcp://192.168.1.19:1883";
     MqttClient client = null;
+
+    private static final String UART_DEVICE_NAME = "MINIUART";
+    private UartDevice mDevice;
 
     /**
      * Handle an intent that is broadcast by the Bluetooth adapter whenever it changes its
@@ -187,6 +191,31 @@ public class A2dpSinkActivity extends Activity {
             mBluetoothAdapter.enable();
         }
 
+        // Initialise MqttClient
+        try {
+            if (client == null) {
+                speak("two");
+                client = new MqttClient(QUEUE_IP, "VpsAndroidThing", new MemoryPersistence());
+            }
+        } catch (MqttException e) {
+            e.printStackTrace();
+        }
+
+        // Initialise IO on UART (Serial)
+        try {
+            PeripheralManager pManager = PeripheralManager.getInstance();
+
+            List<String> portList = pManager.getUartDeviceList();
+            if (portList.isEmpty()) {
+                Log.i(TAG, "No UART port available on this device.");
+            } else {
+                Log.i(TAG, "List of available ports: " + portList);
+            }
+
+            mDevice = pManager.openUartDevice(UART_DEVICE_NAME);
+        } catch (IOException e) {
+            Log.w(TAG, "Unable to access UART", e);
+        }
     }
 
     @Override
@@ -233,12 +262,23 @@ public class A2dpSinkActivity extends Activity {
         // we intentionally leave the Bluetooth adapter enabled, so that other samples can use it
         // without having to initialize it.
 
+        //Disconnect MqttClient
         if(client != null){
             try{
                 client.disconnect();
                 client.close();
             } catch (MqttException e) {
                 e.printStackTrace();
+            }
+        }
+
+        //Disconnect IO
+        if (mDevice != null) {
+            try {
+                mDevice.close();
+                mDevice = null;
+            } catch (IOException e) {
+                Log.w(TAG, "Unable to close GPIO", e);
             }
         }
     }
@@ -294,23 +334,6 @@ public class A2dpSinkActivity extends Activity {
         discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION,
                 DISCOVERABLE_TIMEOUT_MS);
         startActivityForResult(discoverableIntent, REQUEST_CODE_ENABLE_DISCOVERABLE);
-
-        //TODO Add message send enable
-        try {
-            if(client == null) {
-                client = new MqttClient(QUEUE_IP, "VpsAndroidThing", new MemoryPersistence());
-                client.connect();
-            }
-
-            MqttMessage message = new MqttMessage();
-            message.setPayload("MQTT Message Enable Discoverable"
-                    .getBytes());
-            client.publish("topic/vps", message);
-        } catch (MqttPersistenceException e) {
-                e.printStackTrace();
-        } catch (MqttException e) {
-            e.printStackTrace();
-        }
     }
 
     @Override
@@ -343,6 +366,20 @@ public class A2dpSinkActivity extends Activity {
             speak("Bluetooth audio sink " + SPEAK_VERSION + " is discoverable for " + DISCOVERABLE_TIMEOUT_MS +
                     " milliseconds. Look for a device named " + ADAPTER_FRIENDLY_NAME);
 
+            //TODO Add message send enable
+            try {
+                if(!client.isConnected()){
+                    client.connect();
+                }
+
+                MqttMessage message = new MqttMessage();
+                message.setPayload("MQTT Message Enable Discoverable"
+                        .getBytes());
+                client.publish("topic/vps", message);
+            } catch (MqttException e) {
+                speak(e.toString());
+                e.printStackTrace();
+            }
         }
     }
 
@@ -357,8 +394,7 @@ public class A2dpSinkActivity extends Activity {
         }
         //TODO Add message send disable
         try {
-            if(client == null) {
-                client = new MqttClient(QUEUE_IP, "VpsAndroidThing", new MemoryPersistence());
+            if(!client.isConnected()){
                 client.connect();
             }
 
@@ -366,9 +402,8 @@ public class A2dpSinkActivity extends Activity {
             message.setPayload("MQTT Message Disconnect Connected Devices"
                     .getBytes());
             client.publish("topic/vps", message);
-        } catch (MqttPersistenceException e) {
-            e.printStackTrace();
         } catch (MqttException e) {
+            speak(e.toString());
             e.printStackTrace();
         }
     }

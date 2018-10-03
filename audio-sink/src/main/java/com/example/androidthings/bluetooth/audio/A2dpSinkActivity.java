@@ -44,8 +44,19 @@ import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
-import com.google.android.things.pio.PeripheralManager;
-import com.google.android.things.pio.UartDevice;
+
+import org.opcfoundation.ua.builtintypes.DataValue;
+import org.opcfoundation.ua.builtintypes.LocalizedText;
+import org.opcfoundation.ua.core.ApplicationDescription;
+import org.opcfoundation.ua.core.ApplicationType;
+import org.opcfoundation.ua.core.Identifiers;
+import org.opcfoundation.ua.transport.security.SecurityMode;
+
+import java.net.UnknownHostException;
+
+import com.prosysopc.ua.ApplicationIdentity;
+import com.prosysopc.ua.SecureIdentityException;
+import com.prosysopc.ua.client.UaClient;
 
 /**
  * Sample usage of the A2DP sink bluetooth profile. At startup, this activity sets the Bluetooth
@@ -85,9 +96,6 @@ public class A2dpSinkActivity extends Activity {
     private static final String SPEAK_VERSION = "version 9";
     private static final String QUEUE_IP = "tcp://192.168.1.19:1883";
     MqttClient client = null;
-
-    private static final String UART_DEVICE_NAME = "MINIUART";
-    private UartDevice mDevice;
 
     /**
      * Handle an intent that is broadcast by the Bluetooth adapter whenever it changes its
@@ -201,21 +209,34 @@ public class A2dpSinkActivity extends Activity {
             e.printStackTrace();
         }
 
-        // Initialise IO on UART (Serial)
+        // Connect to OPC Server
         try {
-            PeripheralManager pManager = PeripheralManager.getInstance();
-
-            List<String> portList = pManager.getUartDeviceList();
-            if (portList.isEmpty()) {
-                Log.i(TAG, "No UART port available on this device.");
-            } else {
-                Log.i(TAG, "List of available ports: " + portList);
-            }
-
-            mDevice = pManager.openUartDevice(UART_DEVICE_NAME);
-        } catch (IOException e) {
-            Log.w(TAG, "Unable to access UART", e);
+            UaClient client = new UaClient("opc.tcp://localhost:52520/OPCUA/SampleConsoleServer");
+            client.setSecurityMode(SecurityMode.NONE);
+            initialize(client);
+            client.connect();
+            DataValue value = client.readValue(Identifiers.Server_ServerStatus_State);
+            System.out.println(value);
+            client.disconnect();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+    }
+
+    // OPC Server Connection Initialise
+    protected static void initialize(UaClient client) throws SecureIdentityException, IOException, UnknownHostException {
+        // *** Application Description is sent to the server
+        ApplicationDescription appDescription = new ApplicationDescription();
+        appDescription.setApplicationName(new LocalizedText("SimpleClient", Locale.ENGLISH));
+        // 'localhost' (all lower case) in the URI is converted to the actual
+        // host name of the computer in which the application is run
+        appDescription.setApplicationUri("urn:localhost:UA:SimpleClient");
+        appDescription.setProductUri("urn:prosysopc.com:UA:SimpleClient");
+        appDescription.setApplicationType(ApplicationType.Client);
+
+        final ApplicationIdentity identity = new ApplicationIdentity();
+        identity.setApplicationDescription(appDescription);
+        client.setApplicationIdentity(identity);
     }
 
     @Override
@@ -269,16 +290,6 @@ public class A2dpSinkActivity extends Activity {
                 client.close();
             } catch (MqttException e) {
                 e.printStackTrace();
-            }
-        }
-
-        //Disconnect IO
-        if (mDevice != null) {
-            try {
-                mDevice.close();
-                mDevice = null;
-            } catch (IOException e) {
-                Log.w(TAG, "Unable to close GPIO", e);
             }
         }
     }

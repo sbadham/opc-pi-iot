@@ -22,8 +22,8 @@ android {
         applicationId "com.example.androidthings.bluetooth.audio"
         minSdkVersion 27
         targetSdkVersion 27
-        versionCode 9
-        versionName '1.9'
+        versionCode 10
+        versionName '1.10'
     }
     buildTypes {
         release {
@@ -41,4 +41,5 @@ dependencies {
     implementation 'org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.0.2'
     implementation files('/Users/simonbadham/Documents/Android Things/OPC UA/prosys-opc-ua-java-sdk-3.1.6-542-client-server-evaluation/lib/prosys-opc-ua-java-sdk-client-server-evaluation-3.1.6-542.jar')
     implementation files('/Users/simonbadham/Documents/Android Things/OPC UA/prosys-opc-ua-java-sdk-3.1.6-542-client-server-evaluation/lib/opc-ua-stack-1.3.345-183.jar')
+    implementation files('/Users/simonbadham/Documents/Android Things/OPC UA/prosys-opc-ua-java-sdk-3.1.6-542-client-server-evaluation/lib/slf4j-api-1.7.7.jar')
 }

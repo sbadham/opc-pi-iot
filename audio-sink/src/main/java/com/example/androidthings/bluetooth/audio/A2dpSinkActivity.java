@@ -81,7 +81,9 @@ public class A2dpSinkActivity extends Activity {
     private TextToSpeech mTtsEngine;
 
     private static final String SPEAK_VERSION = "version 10";
-    private static final String QUEUE_IP = "tcp://192.168.1.19:1883"; //TODO Mosquitto Broker Address Change
+    //TODO Mosquitto Broker Address Change
+    //private static final String QUEUE_IP = "tcp://192.168.1.19:1883";
+    private static final String QUEUE_IP = "tcp://192.168.43.89:1883";
     private MqttClient client = null;
 
     /**
@@ -349,7 +351,8 @@ public class A2dpSinkActivity extends Activity {
                 e.printStackTrace();
             }
 
-            new OpcUaTask().execute("opc.tcp://Skylake-SB:49320"); //TODO Kepware OPC UA Server Address Change
+            //TODO Kepware OPC UA Server Address Change
+            new OpcUaTask().execute("opc.tcp://Skylake-SB:49320");
         }
     }
 

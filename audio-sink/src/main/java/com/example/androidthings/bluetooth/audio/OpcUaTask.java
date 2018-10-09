@@ -25,7 +25,8 @@ public class OpcUaTask extends AsyncTask<String, Void, String> {
 
     private String OperationResult = "";
     private MqttClient client = null;
-    private static final String QUEUE_IP = "tcp://192.168.1.19:1883"; //TODO Mosquitto Broker Address Change
+    //TODO Mosquitto Broker Address Change
+    private static final String QUEUE_IP = "tcp://192.168.43.89:1883";
 
     @Override
     protected String doInBackground(String... uaa) {

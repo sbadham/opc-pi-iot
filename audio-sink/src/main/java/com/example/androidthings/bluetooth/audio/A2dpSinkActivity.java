@@ -81,7 +81,7 @@ public class A2dpSinkActivity extends Activity {
     private TextToSpeech mTtsEngine;
 
     private static final String SPEAK_VERSION = "version 10";
-    private static final String QUEUE_IP = "tcp://192.168.1.19:1883";
+    private static final String QUEUE_IP = "tcp://192.168.1.19:1883"; //TODO Mosquitto Broker Address Change
     private MqttClient client = null;
 
     /**
@@ -335,7 +335,6 @@ public class A2dpSinkActivity extends Activity {
             speak("Bluetooth audio sink " + SPEAK_VERSION + " is discoverable for " + DISCOVERABLE_TIMEOUT_MS +
                     " milliseconds. Look for a device named " + ADAPTER_FRIENDLY_NAME);
 
-            //TODO Add message send enable
             try {
                 if(!client.isConnected()){
                     client.connect();
@@ -350,7 +349,7 @@ public class A2dpSinkActivity extends Activity {
                 e.printStackTrace();
             }
 
-            new OpcUaTask().execute("opc.tcp://Skylake-SB:49320");
+            new OpcUaTask().execute("opc.tcp://Skylake-SB:49320"); //TODO Kepware OPC UA Server Address Change
         }
     }
 
@@ -363,7 +362,7 @@ public class A2dpSinkActivity extends Activity {
             Log.i(TAG, "Disconnecting device " + device);
             A2dpSinkHelper.disconnect(mA2DPSinkProxy, device);
         }
-        //TODO Add message send disable
+
         try {
             if(!client.isConnected()){
                 client.connect();

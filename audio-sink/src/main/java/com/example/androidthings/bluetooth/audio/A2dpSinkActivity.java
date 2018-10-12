@@ -80,9 +80,7 @@ public class A2dpSinkActivity extends Activity {
 
     private TextToSpeech mTtsEngine;
 
-    private static final String SPEAK_VERSION = "version 10";
-    private static final String QUEUE_IP = "tcp://192.168.1.19:1883"; //TODO Mosquitto Broker Address Change
-    private MqttClient client = null;
+    private static final String SPEAK_VERSION = "version 11";
 
     /**
      * Handle an intent that is broadcast by the Bluetooth adapter whenever it changes its
@@ -185,16 +183,6 @@ public class A2dpSinkActivity extends Activity {
             Log.d(TAG, "Bluetooth adapter not enabled. Enabling.");
             mBluetoothAdapter.enable();
         }
-
-        // Initialise MqttClient
-        try {
-            if (client == null) {
-                speak("two");
-                client = new MqttClient(QUEUE_IP, "VpsAndroidThing", new MemoryPersistence());
-            }
-        } catch (MqttException e) {
-            e.printStackTrace();
-        }
     }
 
     @Override
@@ -241,15 +229,6 @@ public class A2dpSinkActivity extends Activity {
         // we intentionally leave the Bluetooth adapter enabled, so that other samples can use it
         // without having to initialize it.
 
-        //Disconnect MqttClient
-        if(client != null){
-            try{
-                client.disconnect();
-                client.close();
-            } catch (MqttException e) {
-                e.printStackTrace();
-            }
-        }
     }
 
     private void setupBTProfiles() {
@@ -335,21 +314,9 @@ public class A2dpSinkActivity extends Activity {
             speak("Bluetooth audio sink " + SPEAK_VERSION + " is discoverable for " + DISCOVERABLE_TIMEOUT_MS +
                     " milliseconds. Look for a device named " + ADAPTER_FRIENDLY_NAME);
 
-            try {
-                if(!client.isConnected()){
-                    client.connect();
-                }
-
-                MqttMessage message = new MqttMessage();
-                message.setPayload("MQTT Message Enable Discoverable"
-                        .getBytes());
-                client.publish("topic/vps", message);
-            } catch (MqttException e) {
-                speak(e.toString());
-                e.printStackTrace();
-            }
-
-            new OpcUaTask().execute("opc.tcp://Skylake-SB:49320"); //TODO Kepware OPC UA Server Address Change
+            //TODO Kepware OPC UA Server Address Change
+            //new OpcUaTask().execute("opc.tcp://Skylake-SB:49320");
+            new OpcUaTask().execute("opc.tcp://192.168.43.158:49320");
         }
     }
 
@@ -361,20 +328,6 @@ public class A2dpSinkActivity extends Activity {
         for (BluetoothDevice device: mA2DPSinkProxy.getConnectedDevices()) {
             Log.i(TAG, "Disconnecting device " + device);
             A2dpSinkHelper.disconnect(mA2DPSinkProxy, device);
-        }
-
-        try {
-            if(!client.isConnected()){
-                client.connect();
-            }
-
-            MqttMessage message = new MqttMessage();
-            message.setPayload("MQTT Message Disconnect Connected Devices"
-                    .getBytes());
-            client.publish("topic/vps", message);
-        } catch (MqttException e) {
-            speak(e.toString());
-            e.printStackTrace();
         }
     }
 

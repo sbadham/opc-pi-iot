@@ -1,15 +1,12 @@
 package com.example.androidthings.bluetooth.audio;
 
 import android.os.AsyncTask;
+import android.security.keystore.KeyProperties;
 
 import com.prosysopc.ua.ApplicationIdentity;
 import com.prosysopc.ua.SecureIdentityException;
 import com.prosysopc.ua.client.UaClient;
 
-import org.eclipse.paho.client.mqttv3.MqttClient;
-import org.eclipse.paho.client.mqttv3.MqttException;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
-import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.opcfoundation.ua.builtintypes.DataValue;
 import org.opcfoundation.ua.builtintypes.LocalizedText;
 import org.opcfoundation.ua.core.ApplicationDescription;
@@ -21,23 +18,18 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.Locale;
 
+import java.security.KeyPair;
+import com.google.android.things.iotcore.ConnectionParams;
+import com.google.android.things.iotcore.IotCoreClient;
+
+import java.security.GeneralSecurityException;
+
 public class OpcUaTask extends AsyncTask<String, Void, String> {
 
     private String OperationResult = "";
-    private MqttClient client = null;
-    private static final String QUEUE_IP = "tcp://192.168.1.19:1883"; //TODO Mosquitto Broker Address Change
 
     @Override
     protected String doInBackground(String... uaa) {
-
-        // Initialise MqttClient
-        try {
-            if (client == null) {
-                client = new MqttClient(QUEUE_IP, "VpsAndroidThing", new MemoryPersistence());
-            }
-        } catch (MqttException e) {
-            e.printStackTrace();
-        }
 
         // Connect to OPC UA Server and retrieve status
         try {
@@ -77,20 +69,46 @@ public class OpcUaTask extends AsyncTask<String, Void, String> {
     @Override
     protected void onPostExecute(String result){
 
-        // Publish the OPC UA Server status on mq
+        //TODO Implement IoT Event
+
         try {
-            if(!client.isConnected()){
-                client.connect();
+            // Generate or get keys
+            AuthKeyGenerator keyGenerator = null;
+            try {
+                keyGenerator = new AuthKeyGenerator(KeyProperties.KEY_ALGORITHM_RSA);
+            } catch (GeneralSecurityException | IOException e) {
+                throw new IllegalArgumentException("Cannot create a key generator", e);
             }
 
-            result = "OPC UA Status: " + result;
+            // Configure Cloud IoT Core project information
+            ConnectionParams connectionParams = new ConnectionParams.Builder()
+                    .setProjectId("jlr-dl-dev")
+                    .setRegistry("my-registry", "us-central1")
+                    .setDeviceId("opc-pi-iot")
+                    .build();
 
-            MqttMessage message = new MqttMessage();
-            message.setPayload(result
-                    .getBytes());
-            client.publish("topic/vps", message);
-        } catch (MqttException e) {
-            e.printStackTrace();
+            // Initialize the IoT Core client
+            IotCoreClient client = new IotCoreClient.Builder()
+                    .setConnectionParams(connectionParams)
+                    .setKeyPair(keyGenerator.getKeyPair())
+                    .build();
+
+            // Connect to Cloud IoT Core
+            client.connect();
+
+            if (client.isConnected()) {
+                // Start sending data!
+                System.out.println("Connected and publishing event to IoT Core.");
+                String escapeResult = result.replace("\"", "\\\"");
+                String outJson = "{\"opc-pi-iot-statusresult\":\"" + escapeResult + "\"}";
+                System.out.println("JSON: " + outJson);
+                client.publishDeviceState(outJson.getBytes());
+
+                // Disconnect Cloud IoT Core (SB Add)
+                client.disconnect();
+            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
         }
     }
 }

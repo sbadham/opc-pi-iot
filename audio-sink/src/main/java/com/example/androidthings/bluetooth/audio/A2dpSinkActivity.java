@@ -24,6 +24,9 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
+
+import android.graphics.Path;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
@@ -39,11 +42,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-
-import org.eclipse.paho.client.mqttv3.MqttClient;
-import org.eclipse.paho.client.mqttv3.MqttException;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
-import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 
 /**
  * Sample usage of the A2DP sink bluetooth profile. At startup, this activity sets the Bluetooth
@@ -81,6 +79,9 @@ public class A2dpSinkActivity extends Activity {
     private TextToSpeech mTtsEngine;
 
     private static final String SPEAK_VERSION = "version 11";
+    private static final String CONFIG_SHARED_PREFERENCES_KEY = "cloud_iot_config";
+    private boolean firstRun = true;
+    private OpcUaTask mOpcUaTask;
 
     /**
      * Handle an intent that is broadcast by the Bluetooth adapter whenever it changes its
@@ -314,9 +315,8 @@ public class A2dpSinkActivity extends Activity {
             speak("Bluetooth audio sink " + SPEAK_VERSION + " is discoverable for " + DISCOVERABLE_TIMEOUT_MS +
                     " milliseconds. Look for a device named " + ADAPTER_FRIENDLY_NAME);
 
-            //TODO Kepware OPC UA Server Address Change
-            //new OpcUaTask().execute("opc.tcp://Skylake-SB:49320");
-            new OpcUaTask().execute("opc.tcp://192.168.43.158:49320");
+            // Send OPC Status via IoT Core
+            sendOPCStatus();
         }
     }
 
@@ -367,5 +367,21 @@ public class A2dpSinkActivity extends Activity {
         if (mTtsEngine != null) {
             mTtsEngine.speak(utterance, TextToSpeech.QUEUE_ADD, null, UTTERANCE_ID);
         }
+    }
+
+    private void sendOPCStatus(){
+        //TODO Kepware OPC UA Server Address Change
+        //Set a default ua-client address and then retrieve it
+        SharedPreferences prefs = getSharedPreferences(CONFIG_SHARED_PREFERENCES_KEY, MODE_PRIVATE);
+        if(firstRun) {
+            SharedPreferences.Editor prefEdit = prefs.edit();
+            prefEdit.putString("ua-client", "opc.tcp://192.168.43.158:49320");
+            prefEdit.commit();
+            firstRun = false;
+        }
+
+        String uaClient = prefs.getString("ua-client", "");
+        OpcUaTask mOpcUaTask = new OpcUaTask(prefs);
+        mOpcUaTask.execute(uaClient);
     }
 }

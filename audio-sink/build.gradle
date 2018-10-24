@@ -33,6 +33,8 @@ android {
     }
     productFlavors {
     }
+    compileOptions {
+    }
 }
 
 dependencies {

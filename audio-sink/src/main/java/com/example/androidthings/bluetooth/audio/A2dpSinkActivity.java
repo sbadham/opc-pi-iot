@@ -77,7 +77,7 @@ public class A2dpSinkActivity extends Activity {
 
     private TextToSpeech mTtsEngine;
 
-    private static final String SPEAK_VERSION = "version 11";
+    private static final String SPEAK_VERSION = "version 13";
     private static final String CONFIG_SHARED_PREFERENCES_KEY = "cloud_iot_config";
     private boolean firstRun = true;
     private IoTCoreTask mIoTCoreTask;

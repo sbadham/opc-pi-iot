@@ -320,7 +320,6 @@ public class A2dpSinkActivity extends Activity {
             speak("Bluetooth audio sink " + SPEAK_VERSION + " is discoverable for " + DISCOVERABLE_TIMEOUT_MS +
                     " milliseconds. Look for a device named " + ADAPTER_FRIENDLY_NAME);
 
-            //TODO Fix Publish [mClient.publishDeviceState(outJson.getBytes());]
             // Initialise OPC Task Connection
             initOpCTask();
         }

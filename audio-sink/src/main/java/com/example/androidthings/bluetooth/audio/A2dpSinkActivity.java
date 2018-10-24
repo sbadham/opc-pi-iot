@@ -26,7 +26,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 
-import android.graphics.Path;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
@@ -81,6 +80,7 @@ public class A2dpSinkActivity extends Activity {
     private static final String SPEAK_VERSION = "version 11";
     private static final String CONFIG_SHARED_PREFERENCES_KEY = "cloud_iot_config";
     private boolean firstRun = true;
+    private IoTCoreTask mIoTCoreTask;
     private OpcUaTask mOpcUaTask;
 
     /**
@@ -184,6 +184,11 @@ public class A2dpSinkActivity extends Activity {
             Log.d(TAG, "Bluetooth adapter not enabled. Enabling.");
             mBluetoothAdapter.enable();
         }
+
+        // Initialise preferences for use between tasks
+        initPrefs();
+        // Initialise IoT Core Connection
+        initIoTCore();
     }
 
     @Override
@@ -315,8 +320,9 @@ public class A2dpSinkActivity extends Activity {
             speak("Bluetooth audio sink " + SPEAK_VERSION + " is discoverable for " + DISCOVERABLE_TIMEOUT_MS +
                     " milliseconds. Look for a device named " + ADAPTER_FRIENDLY_NAME);
 
-            // Send OPC Status via IoT Core
-            sendOPCStatus();
+            //TODO Fix Publish [mClient.publishDeviceState(outJson.getBytes());]
+            // Initialise OPC Task Connection
+            initOpCTask();
         }
     }
 
@@ -369,8 +375,7 @@ public class A2dpSinkActivity extends Activity {
         }
     }
 
-    private void sendOPCStatus(){
-        //TODO Kepware OPC UA Server Address Change
+    private void initPrefs(){
         //Set a default ua-client address and then retrieve it
         SharedPreferences prefs = getSharedPreferences(CONFIG_SHARED_PREFERENCES_KEY, MODE_PRIVATE);
         if(firstRun) {
@@ -379,9 +384,17 @@ public class A2dpSinkActivity extends Activity {
             prefEdit.commit();
             firstRun = false;
         }
+    }
 
-        String uaClient = prefs.getString("ua-client", "");
-        OpcUaTask mOpcUaTask = new OpcUaTask(prefs);
-        mOpcUaTask.execute(uaClient);
+    private void initIoTCore(){
+        SharedPreferences prefs = getSharedPreferences(CONFIG_SHARED_PREFERENCES_KEY, MODE_PRIVATE);
+        mIoTCoreTask = new IoTCoreTask(prefs);
+        mIoTCoreTask.initIoTCore();
+    }
+
+    private void initOpCTask(){
+        SharedPreferences prefs = getSharedPreferences(CONFIG_SHARED_PREFERENCES_KEY, MODE_PRIVATE);
+        mOpcUaTask = new OpcUaTask(mIoTCoreTask);
+        mOpcUaTask.execute(prefs.getString("ua-client", ""));
     }
 }
